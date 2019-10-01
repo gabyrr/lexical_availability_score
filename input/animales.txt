@@ -1,0 +1,3 @@
+perro vaca gato pez ave perro gato
+gato perro raton pez ave
+perro pez ave raton gato
