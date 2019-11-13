@@ -258,7 +258,7 @@ def main_idlv(samples, resolution, fout, normalization="max_global", max_feature
 
     ## now for each word in dict_words_arrayindex compute idlv
     for word in dict_words_arrayindex:
-        #print("[DEBUG]: word = %s "%(word))
+        logging.debug("word = %s "%(word))
         sum = 0.0
         last_index = stats['last_position'][word]
         if normalization=="max_global":
@@ -269,10 +269,13 @@ def main_idlv(samples, resolution, fout, normalization="max_global", max_feature
             max_freq = len(samples) ## uses the num of lists to compute idlv
         for i in range(last_index+1):
             freq_index = dict_words_arrayindex[word][i] if (i in dict_words_arrayindex[word]) else 0
-            if last_index == 0:
-                sum += freq_index/max_freq
-            else:
-                sum += math.exp(-2.3*(i/last_index)) * ( freq_index/ max_freq)
+            if freq_index != 0:
+                if last_index == 0: # then appers in first position, so e^0=1
+                    sum += freq_index/max_freq
+                else:
+                    sum += math.exp(-2.3*(i/last_index)) * ( freq_index/ max_freq)
+
+                logging.debug("index=%d; freq_index=%d; max_freq=%d; last_index=%d; sum=%f"%(i, freq_index, max_freq, last_index, sum))
         stats['idlv'][word] = sum
 
     ## sorted lists.
