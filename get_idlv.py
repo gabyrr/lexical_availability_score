@@ -16,7 +16,7 @@
 
 .. date_last_updated:: Oct 1st, 2019
 """
-from __future__ import division
+# from __future__ import division
 import sys
 import os
 import math
@@ -26,7 +26,7 @@ import codecs
 import logging  ## to use some debug messages
 
 
-#Funcion que obtiene el nombre del archivo
+# Funcion que obtiene el nombre del archivo
 ## Esau's method
 def get_file_name(abs_path):
     """Utility function to get files names from a path.
@@ -36,13 +36,14 @@ def get_file_name(abs_path):
     abs_path : string
         absolute path
     """
-    path_elements= abs_path.split('/')
-    name_elements = path_elements[len(path_elements)-1].split('.')
+    path_elements = abs_path.split("/")
+    name_elements = path_elements[len(path_elements) - 1].split(".")
     return name_elements[0]
+
 
 ##Funcion que permite cargar la lista de archivos a procesar
 ## Esau's method
-def load_files_names(root, patterns ='*', single_level = False, yield_folders = False):
+def load_files_names(root, patterns="*", single_level=False, yield_folders=False):
     """Utility function to load files names from a root.
 
     Parameters
@@ -56,7 +57,9 @@ def load_files_names(root, patterns ='*', single_level = False, yield_folders = 
     yield_folders : boolean, optional
         (default is False)
     """
-    patterns = patterns.split(';')# se puede recibir una lista de extensiones separados por punto y coma
+    patterns = patterns.split(
+        ";"
+    )  # se puede recibir una lista de extensiones separados por punto y coma
     for path, subdirs, files in os.walk(root):
         if yield_folders:
             files.extend(subdirs)
@@ -68,6 +71,7 @@ def load_files_names(root, patterns ='*', single_level = False, yield_folders = 
                     break
         if single_level:
             break
+
 
 def write_listtup_tofile(filename, sep, mylist):
     """Utility function to write into file a list of tuples.
@@ -88,6 +92,7 @@ def write_listtup_tofile(filename, sep, mylist):
     f.write(string)
     f.close()
 
+
 def sortedlist(mydict, topn):
     """Utility function to sort a dictionary according to the value of all keys in it.
 
@@ -103,17 +108,19 @@ def sortedlist(mydict, topn):
     newlist : a list
         a list containing topn elements
     """
-    i=0
-    newlist=[]
-    max = topn if topn!= None else len(mydict) ## if topn is None, copy the entire list
-    for key, value in sorted(mydict.iteritems(), key=lambda(k,v): (v,k),reverse=True):
+    i = 0
+    newlist = []
+    max = (
+        topn if topn != None else len(mydict)
+    )  ## if topn is None, copy the entire list
+    ordi = [(k, mydict[k]) for k in sorted(mydict, key=mydict.get, reverse=True)]
+    for (key, value,) in ordi:
         if i < max:
             newlist.append((key, value))
-            i+=1
+            i += 1
         else:
             break
     return newlist
-
 
 
 def update_dictionary(my_dict, stats, index, word):
@@ -142,23 +149,32 @@ def update_dictionary(my_dict, stats, index, word):
     if word not in my_dict:
         ## Words are being added as appering.
         my_dict.setdefault(word, {})
-        my_dict[word][index] = 1 ## the first time the frecuency of that word in _index_ is 1
-        stats['last_position'].setdefault(word, index)  ## the first dict_last_position_ is this value of _index_
-        stats['frequency'].setdefault(word, 1)  ## at the begining the frequency is 1
+        my_dict[word][
+            index
+        ] = 1  ## the first time the frecuency of that word in _index_ is 1
+        stats["last_position"].setdefault(
+            word, index
+        )  ## the first dict_last_position_ is this value of _index_
+        stats["frequency"].setdefault(word, 1)  ## at the begining the frequency is 1
     else:
         ## the word's already in dictionary, so we need to UPDATE its values
-        my_dict[word].setdefault(index,0) ## we added this _index_ if is a new position in the corpus
-        my_dict[word][index] += 1  ## increment in one the frecuency of that word in this _index_
+        my_dict[word].setdefault(
+            index, 0
+        )  ## we added this _index_ if is a new position in the corpus
+        my_dict[word][
+            index
+        ] += 1  ## increment in one the frecuency of that word in this _index_
 
         ## update last_position only if index is greater that the current value
-        if (stats['last_position'][word] < index):
-            stats['last_position'][word] = index
+        if stats["last_position"][word] < index:
+            stats["last_position"][word] = index
         ## update total frequency
-        stats['frequency'][word] += 1
+        stats["frequency"][word] += 1
 
-    logging.debug("%s: %s" %(word, my_dict[word]))
+    logging.debug("%s: %s" % (word, my_dict[word]))
 
     return my_dict, stats
+
 
 def get_indices(sample, resolution, dict_words_arrayindex, stats):
     """Given a sample text, update the matrix (vocabulary x indices) and the stats dictionary that are useful to compute the IDLV values
@@ -187,35 +203,49 @@ def get_indices(sample, resolution, dict_words_arrayindex, stats):
     logging.debug("len(words)=%d, resolution=%d" % (len(words), resolution))
 
     jump = 0
-    if (resolution > 1):  ## we don't want absolute position
+    if resolution > 1:  ## we don't want absolute position
         total_positions = resolution
-        jump = math.floor(len(words)/resolution)
+        jump = math.floor(len(words) / resolution)
 
     ### if resolution == 1 means we want absolute positions
     ### but resolution > 0 but jump == 0; that means the resolution is bigger than the length of the sample, in this case, we use absolute positions
-    if (jump == 0 or resolution == 1):
+    if jump == 0 or resolution == 1:
         total_positions = len(words)
         jump = 1
-    #print("[DEBUG]:jump=%d; total_positions=%d" % (jump, total_positions))
+    # print("[DEBUG]:jump=%d; total_positions=%d" % (jump, total_positions))
 
-    k = 0 ## runs in the vector of words
-    for i in range(total_positions):  ## control the maximum numbers of indices requiered according to _resolution_
+    k = 0  ## runs in the vector of words
+    for i in range(
+        total_positions
+    ):  ## control the maximum numbers of indices requiered according to _resolution_
         for j in range(int(jump)):  ## how many words will have the same index
             w = words[k]  ## read word
             k += 1
             ## update dict_words_arrayindex and stats given this index _i_ and this word _w_
-            if (w != ""):
-                dict_words_arrayindex, stats = update_dictionary(dict_words_arrayindex, stats, i, w)
+            if w != "":
+                dict_words_arrayindex, stats = update_dictionary(
+                    dict_words_arrayindex, stats, i, w
+                )
 
     ### if there are other words left in _words_ (this happend when len(words)/resolution is not integer)
     for kk in range(k, len(words)):
         w = words[kk]
-        if (w != ""):
-            dict_words_arrayindex, stats = update_dictionary(dict_words_arrayindex, stats, i, w)
+        if w != "":
+            dict_words_arrayindex, stats = update_dictionary(
+                dict_words_arrayindex, stats, i, w
+            )
 
     return dict_words_arrayindex, stats
 
-def main_idlv(samples, resolution, fout, normalization="max_global", max_features=None, by_instance=False):
+
+def main_idlv(
+    samples,
+    resolution,
+    fout,
+    normalization="max_global",
+    max_features=None,
+    by_instance=False,
+):
     """Main function to compute an idlv list given a set of texts. The main goal of this function is to build the
     IDLV lists of each category from the input files that exist within the input directory
 
@@ -241,51 +271,73 @@ def main_idlv(samples, resolution, fout, normalization="max_global", max_feature
     """
 
     stats = {}
-    stats['last_position'] = {}  ## dictionary with dict[word] = the lowest position of that word
-    stats['frequency'] = {}  ## dictionary with dict[word] = total frequency of that word in corpus
-    stats['idlv'] = {} ## dictionary with dict[word] = idlv value
+    stats[
+        "last_position"
+    ] = {}  ## dictionary with dict[word] = the lowest position of that word
+    stats[
+        "frequency"
+    ] = {}  ## dictionary with dict[word] = total frequency of that word in corpus
+    stats["idlv"] = {}  ## dictionary with dict[word] = idlv value
 
-    dict_words_arrayindex = {} ### dict[word]=dictionary of indices and frequency where this word appears
+    dict_words_arrayindex = (
+        {}
+    )  ### dict[word]=dictionary of indices and frequency where this word appears
 
-    if (by_instance==False):
+    if by_instance == False:
         ## read all samples and build index matrix and last_position
         for sample in samples:
-            #sample = sample.strip()
-            dict_words_arrayindex, stats = get_indices(sample, resolution, dict_words_arrayindex, stats)
+            # sample = sample.strip()
+            dict_words_arrayindex, stats = get_indices(
+                sample, resolution, dict_words_arrayindex, stats
+            )
     else:
         ## read only the one sample
-        dict_words_arrayindex, stats = get_indices(samples, resolution, dict_words_arrayindex, stats)
+        dict_words_arrayindex, stats = get_indices(
+            samples, resolution, dict_words_arrayindex, stats
+        )
 
     ## now for each word in dict_words_arrayindex compute idlv
     for word in dict_words_arrayindex:
-        logging.debug("word = %s "%(word))
+        logging.debug("word = %s " % (word))
         sum = 0.0
-        last_index = stats['last_position'][word]
-        if normalization=="max_global":
-            max_freq = max(stats['frequency'].values())  # The max frequency in all corpus of ANY word --- this is the default
-        elif normalization=="max_word": ## normalization=="max_word"
-            max_freq = stats['frequency'][word] # The max frequency in all corpus for THIS word
-        else: ## normalization=="num_lists"
-            max_freq = len(samples) ## uses the num of lists to compute idlv
-        for i in range(last_index+1):
-            freq_index = dict_words_arrayindex[word][i] if (i in dict_words_arrayindex[word]) else 0
+        last_index = stats["last_position"][word]
+        if normalization == "max_global":
+            max_freq = max(
+                stats["frequency"].values()
+            )  # The max frequency in all corpus of ANY word --- this is the default
+        elif normalization == "max_word":  ## normalization=="max_word"
+            max_freq = stats["frequency"][
+                word
+            ]  # The max frequency in all corpus for THIS word
+        else:  ## normalization=="num_lists"
+            max_freq = len(samples)  ## uses the num of lists to compute idlv
+        for i in range(last_index + 1):
+            freq_index = (
+                dict_words_arrayindex[word][i]
+                if (i in dict_words_arrayindex[word])
+                else 0
+            )
             if freq_index != 0:
-                if last_index == 0: # then appers in first position, so e^0=1
-                    sum += freq_index/max_freq
+                if last_index == 0:  # then appers in first position, so e^0=1
+                    sum += freq_index / max_freq
                 else:
-                    sum += math.exp(-2.3*(i/last_index)) * ( freq_index/ max_freq)
+                    sum += math.exp(-2.3 * (i / last_index)) * (freq_index / max_freq)
 
-                logging.debug("index=%d; freq_index=%d; max_freq=%d; last_index=%d; sum=%f"%(i, freq_index, max_freq, last_index, sum))
-        stats['idlv'][word] = sum
+                logging.debug(
+                    "index=%d; freq_index=%d; max_freq=%d; last_index=%d; sum=%f"
+                    % (i, freq_index, max_freq, last_index, sum)
+                )
+        stats["idlv"][word] = sum
 
     ## sorted lists.
     ## mylist_tup is an array of tuples [(key, value), (key, value),...]
-    mylist_tup = sortedlist(stats['idlv'], max_features)
+    mylist_tup = sortedlist(stats["idlv"], max_features)
 
-    if (fout!=""):
-        #print("[DEBUG]:writing in %s" % fout)
+    if fout != "":
+        # print("[DEBUG]:writing in %s" % fout)
         write_listtup_tofile(fout, "\t", mylist_tup)
     return dict(mylist_tup)
+
 
 def main(dir_in, dir_out, resolution):
     """Main function for a set of sample's classes. This will call **main_idlv** funtion for each different class.
@@ -299,25 +351,29 @@ def main(dir_in, dir_out, resolution):
     resolution : integer
         Specify the maximum number of positions allowed, if == 1 then consider absolute positions of words in the texts; if > 1 then divide the text in that many parts, each part then is considere a position. Parameter needed to compute IDLV values.
     """
-    #Config how to see the debug mensages
-    logging.basicConfig(stream=sys.stderr, level=logging.INFO)  ## set level=logging.DEBUG for more information
+    # Config how to see the debug mensages
+    logging.basicConfig(
+        stream=sys.stderr, level=logging.INFO
+    )  ## set level=logging.DEBUG for more information
 
-    #fetch the number of files contained in the input directory
-    files = list(load_files_names(dir_in, '*.txt'))
+    # fetch the number of files contained in the input directory
+    files = list(load_files_names(dir_in, "*.txt"))
 
     ## averything using logging can be ignore, just prints information.
-    logging.info("dir_in:%s, res=%d"%(dir_in, resolution))
+    logging.info("dir_in:%s, res=%d" % (dir_in, resolution))
 
     logging.debug("reading files: %s" % files)
 
-    #for each file, we compute a IDLV list of terms (one file, one list)
+    # for each file, we compute a IDLV list of terms (one file, one list)
     ## each file has *N* lines, each line is a sample.
     for f in files:
-        idlv_file = 'IDLV_list_'+get_file_name(f)+'_'+str(resolution)+'r'+'.idl'
+        idlv_file = (
+            "IDLV_list_" + get_file_name(f) + "_" + str(resolution) + "r" + ".idl"
+        )
         idlv_file = os.path.join(dir_out, idlv_file)
-        samples = open(f,'r')
+        samples = open(f, "r")
 
         main_idlv(samples, resolution, idlv_file)
 
         samples.close()
-    logging.info("Done computing idlv, outputs are in %s\n"%dir_out)
+    logging.info("Done computing idlv, outputs are in %s\n" % dir_out)
